@@ -1,53 +1,40 @@
 [bits 16]
 
 boot:
-    mov ax, 0x7c00
-    mov dx, ax
+	mov [BOOT_DRIVE], dl	; 记录启动的驱动设备	 remember boot device
 
-    mov bp, 0x9F00
-    mov sp, bp
-    jmp start_load_kernel
+	mov ax, 0x7c00
+	mov ds, ax         		; 设置偏移: 0x7c00		set offset : 0x7c00 
+	mov bp, 0x9FF00
+	mov sp, bp				; 初始化栈				init stack
 
-start_load_kernel:
+start_load_setup:			; 加载setup内容			load 'setup'
+	mov cx, 0x0002			; 0磁道, 2扇区			cylinder no.0, sector no.2
+	mov bx, KERNEL_OFFSET	; 读后存放地址			 where to store in memory
+	mov dx, 0x0000			; 0磁头					head no.0
+	add dx, [BOOT_DRIVE]	; dl设置为启动设备		set 'dl' to boot device
+	mov ax, 0x0201			; al为要读1个扇区		al: how many secs to read
+	int 0x13				; 读取, 使用中断		read with BIOS interrpts
+	jnc load_setup_suc		; 如果读取成功			jump is read successful
 
-    mov ax, 0x0200+1 ; ah固定,al为要读的扇区数目(读几个)
-    mov cx, 0x0002 ; 前两位磁道号,后两位从第几个扇区开始读
-    mov bx, 0x1000 ; es:bs(es内容为基偏移bs内容)指向要往内存哪里放
-    int 0x13
-    jnc load_pm
+	mov dx, 0x0000			; 如果失败				if faild...
+	mov ax, 0x0000
+	int 0x13				; 重置读取状态			reset read status
 
-    mov bx, 0x0000
-    mov ax, 0x0000
-    int 0x13
+	jmp start_load_setup	; 重新读一次			and read again
 
-    jmp start_load_kernel
+load_setup_suc:
 
-load_pm:
-    lgdt [gdt_descriptor]
-    mov eax, cr0
-    or eax, 0x1
-    mov cr0, eax
-    jmp init_pm
+	; 将两个参数放进寄存器传给setup		put these in register to pass to 'setup'
+	mov dl, [BOOT_DRIVE]
+	mov ax, [KERNEL_OFFSET]
 
-[bits 32]
-init_pm:
-    mov ax, DATA_SEG
-    mov ds, ax
-    mov ss, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
+	call [KERNEL_OFFSET] 	; 运行KERNEL_OFFSET处	run code at KERNEL_OFFSET
 
-    mov ebp, 0x9FF00
-    mov esp, ebp
+	jmp $
 
-    jmp begin_pm
+BOOT_DRIVE db 0
+KERNEL_OFFSET db 0x90000
 
-begin_pm:
-    call 0x1000
-    jmp $
-
-%include "boot/gdt.asm"
-
-times 510-($-$$) db 0
+times 510 - ($-$$) db 0
 dw 0xaa55

@@ -2,3 +2,4 @@
 [extern kernel_main]
 call kernel_main
 jmp $
+ret

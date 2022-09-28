@@ -1,7 +1,7 @@
 CFLAGS = -g -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs \
 		 -Wall -Wextra -Werror
-C_SOURCES = $(wildcard kernel/*.c)
-HEADERS = $(wildcard kernel/*.h)
+C_SOURCES = $(wildcard kernel/*.c drivers/*.c libs/*.c)
+HEADERS = $(wildcard kernel/*.h drivers/*.h libs/*.h)
 OBJ = ${C_SOURCES:%.c=build/%.o}
 
 compile_and_run:
@@ -14,9 +14,10 @@ compile:
 	mkdir build/boot -p
 	mkdir build/kernel -p
 	mkdir build/bin -p
+	mkdir build/drivers -p
 	make build/bin/os-image.bin
 
-build/bin/os-image.bin: build/boot/boot_sect.bin build/boot/kernel.bin
+build/bin/os-image.bin: build/boot/boot_sect.bin build/boot/setup.bin build/boot/kernel.bin
 	cat $^ > build/bin/os-image.bin
 
 build/boot/kernel.bin: build/boot/kernel_entry.o ${OBJ}
