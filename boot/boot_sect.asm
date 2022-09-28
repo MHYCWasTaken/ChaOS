@@ -14,6 +14,7 @@ start_load_setup:			; 加载setup内容			load 'setup'
 	mov dx, 0x0000			; 0磁头					head no.0
 	add dx, [BOOT_DRIVE]	; dl设置为启动设备		set 'dl' to boot device
 	mov ax, 0x0201			; al为要读1个扇区		al: how many secs to read
+
 	int 0x13				; 读取, 使用中断		read with BIOS interrpts
 	jnc load_setup_suc		; 如果读取成功			jump is read successful
 
@@ -26,13 +27,15 @@ start_load_setup:			; 加载setup内容			load 'setup'
 load_setup_suc:
 
 	; 将两个参数放进寄存器传给setup		put these in register to pass to 'setup'
-	mov dl, [BOOT_DRIVE]
-	mov ax, [KERNEL_OFFSET]
+	;mov dl, [BOOT_DRIVE]
+	;mov ax, [KERNEL_OFFSET]
 
+	;jmp $
 	call [KERNEL_OFFSET] 	; 运行KERNEL_OFFSET处	run code at KERNEL_OFFSET
 
 	jmp $
 
+%include "boot/gdt.asm"
 BOOT_DRIVE db 0
 KERNEL_OFFSET db 0x90000
 

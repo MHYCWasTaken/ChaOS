@@ -1,31 +1,33 @@
-[bits 32]
-
 [bits 16]
+
+get_control:
+
+    ;mov [BOOT_DRIVE], dl
+    ;mov [SETUP_OFFSET], ax
+
+	mov ah, 0x0e
+    mov al, 'U'
+    int 0x10
+
+    jmp $
+
+    jmp start_load_kernel
+
 start_load_kernel:
 
-	
-	mov cx, 0x0002 ; 前两位磁道号,后两位从第几个扇区开始读
-	mov ax, 0x0000
-	mov bx, ax ; es:bx(es内容为基偏移bx内容)指向要往内存哪里放
-	mov ax, 0x1000
+	mov cx, 0x0002
+	mov bx, 0x0000
 	add ax, [BOOT_DRIVE]
-	mov dx, ax ; 磁道号，盘号
-	mov ax, 0x0200+5 ; ah固定,al为要读的扇区数目(读几个)
-	int 0x13
-	jc LOAD_FAIL
-	jmp load_pm
-
-LOAD_FAIL:
-	mov al, 'E'
-	mov ah, 0x0e
-	int 0x10
-	jmp $
-
-	mov ax, 0x0200
 	mov dx, ax
+	mov ax, 0x02F0 ; 读240个扇区
 	int 0x13
+	jnc load_pm
 
-	jmp start_load_kernel
+	mov dx, 0x0000			; 如果失败				if faild...
+	mov ax, 0x0000
+	int 0x13				; 重置读取状态			reset read status
+
+	jmp start_load_kernel	; 重新读一次			and read again
 
 load_pm:
 
@@ -64,7 +66,10 @@ init_pm:
 	jmp begin_pm
 
 begin_pm:
-	call 0x9000
+	call [KERNEL_OFFSET]
 	jmp $
 
 %include "boot/gdt.asm"
+BOOT_DRIVE db 0
+SETUP_OFFSET db 0x90000
+KERNEL_OFFSET db 0
