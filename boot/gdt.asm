@@ -1,27 +1,26 @@
-gdt_start:
-    dw 0x0
-
-gdt_code: 
+GDT_start:
+  GDT_null:
+    dd 0x0
+    dd 0x0
+  GDT_code:
     dw 0xffff
     dw 0x0
     db 0x0
-    db 10011010b
-    db 11001111b
+    db 0b10011010
+    db 0b11001111
     db 0x0
-
-gdt_data:
+  GDT_data:
     dw 0xffff
     dw 0x0
     db 0x0
-    db 10010010b
-    db 11001111b
+    db 0b10010010
+    db 0b11001111
     db 0x0
-
-gdt_end:
-
-gdt_descriptor:
-    dw gdt_end - gdt_start - 1
-    dd gdt_start
-
-CODE_SEG equ gdt_code - gdt_start
-DATA_SEG equ gdt_data - gdt_start
+GDT_end:
+    
+GDT_descriptor:
+    dw GDT_end - GDT_start - 1
+    dd GDT_start
+    
+CODE_SEG equ GDT_code - GDT_start
+DATA_SEG equ GDT_data - GDT_start

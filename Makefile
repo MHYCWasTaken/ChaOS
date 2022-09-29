@@ -20,17 +20,23 @@ compile:
 build/bin/os-image.bin: build/boot/boot_sect.bin build/boot/setup.bin build/boot/kernel.bin
 	cat $^ > build/bin/os-image.bin
 
-build/boot/kernel.bin: build/boot/kernel_entry.o ${OBJ}
-	i686-elf-ld -o $@ -Ttext 0x1000 $^ --oformat binary
+#build/boot/kernel.bin: build/boot/kernel_entry.o ${OBJ}
+#	i686-elf-ld -o $@ -Ttext 0x0 $^ --oformat binary
+
+#build/boot/setup.bin: build/boot/setup.o ${OBJ}
+#	i686-elf-ld -o $@ -Ttext 0x9000 $^ --oformat binary
 
 run: build/bin/os-image.bin
 	qemu-system-i386 -fda build/bin/os-image.bin
 
+build/kernel/%.o: %.c ${HEADERS}
+	i686-elf-gcc ${CFLAGS} -c $< -o $@
+
 build/%.o: %.c ${HEADERS}
 	i686-elf-gcc ${CFLAGS} -ffreestanding -c $< -o $@
 
-build/%.o: %.asm
-	nasm $< -f elf -o $@
+#build/%.o: %.asm
+#	nasm $< -f elf -o $@
 
 build/%.bin: %.asm
 	nasm $< -f bin -o $@
